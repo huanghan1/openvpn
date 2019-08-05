@@ -1,0 +1,74 @@
+1. 手动原始安装
+
+shadowsocks linux版安装包既有服务端程序，也有客户端程序
+
+基于pip安装
+
+~]# yum install python-setuptools && easy_install pip
+
+~]# pip install shadowsocks
+
+安装后服务端程序为ssserver,客户端程序为sslocal
+
+基于yum安装
+
+yum源如下,参考https://copr.fedorainfracloud.org/coprs/librehat/shadowsocks/
+
+
+[librehat-shadowsocks]
+name=Copr repo for shadowsocks owned by librehat
+baseurl=https://copr-be.cloud.fedoraproject.org/results/librehat/shadowsocks/epel-7-$basearch/
+type=rpm-md
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://copr-be.cloud.fedoraproject.org/results/librehat/shadowsocks/pubkey.gpg
+repo_gpgcheck=0
+enabled=1
+enabled_metadata=1
+~]# yum -y install shadowsocks-libev
+安装后服务端程序为ss-server,客户端程序为ss-local
+
+服务端配置
+配置文件
+手动新建配置文件,注释要去掉
+
+~]# vim /ss/server/shadowsock.json
+{
+    "server":"123.123.123.123", #对外提供ss服务的ip，一般为外网ip
+    "server_port":8388,         #提供ss服务的端口
+    "password":"hello",         #连接ss服务器的密码
+    "timeout":300,              #连接等待超时时间
+    "method":"aes-256-cfb"      #加密算法
+}
+启动
+~]# ss-server -c /ss/server/shadowsock.json
+或
+~]# ssserver -c /ss/server/shadowsock.json
+后台启动
+~]# nohup ss-server -c /ss/server/shadowsock.json & 
+或
+~]# nohup ssserver -c /ss/server/shadowsock.json &
+停止
+~]# ps aux | grep shadowsock
+~]# kill -9 对应pid
+客户端配置
+linux客户端
+新建配置文件，注释要去掉
+
+~]# vim /ss/client/shadowsocks_client.json
+{
+    "server":"123.123.123.123",  #服务器ip
+    "server_port":8388,          #服务器ss端口
+    "local_address": "0.0.0.0",  #本地监听的地址（本地共享，一般为局域网linux客户端的ip地址）
+    "local_port":1080,           #本地监听端口
+    "password":"hello",          #服务器ss密码
+    "timeout":300,               #超时时间
+    "method":"aes-256-cfb"       #加密算法，和服务器保持一致
+}
+连接ss服务器
+
+和服务端启动方式一致，仅需把ss-server(ssserver)换成ss-local(sslocal)
+
+
+
+https://www.kkwen.cn/index.php/archives/6/
