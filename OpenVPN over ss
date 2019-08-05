@@ -1,0 +1,79 @@
+OpenVPN over ss, 翻墙的新解决方案
+2018-09-01 05:27
+现在大家翻墙大多数是用ss或ssr还有v2ray。可惜，即使这些开了全局代理也只能让浏览器之类自愿走代理的软件翻墙。而像某些游戏或者下载器（idm）这些不支持走代理的软件就翻不了。 
+而OpenVPN则好一点，用的是虚拟网卡技术，如果连上了就能让所有软件走外网。可惜OpenVPN在翻墙方面跪掉已经一段时间了。然而最近在无聊翻ss的wiki的时候发现有一个简单的让openvpn的流量走ss的方法，经过亲测（20180709），现在已经用上了（centos 7，ipv4），还是比较稳定的。
+
+原材料：vps，网络
+先搭建openvpn
+搭建本来还有点复杂，结果在github上有一个很方便的安装脚本，只需要
+
+wget https://git.io/vpn -O openvpn-install.sh && bash openvpn-install.sh
+脚本github页在这：https://github.com/Nyr/openvpn-install 
+如果没有问题的话，就可以继续了（有问题自己手动装）
+
+装完之后在你所在的文件夹里会多出一个*.ovpn文件 
+把它弄到本机上来（以后要用
+
+然后搭建ss
+github的shadowsocks的masterbrach的readme里有详细的介绍搭建ss https://github.com/shadowsocks/shadowsocks/ 
+因为大家都比较懒所以我复制过来（逃
+
+Install
+Debian / Ubuntu:
+
+apt-get install python-pip
+pip install git+https://github.com/shadowsocks/shadowsocks.git@master
+CentOS:
+
+yum install python-setuptools && easy_install pip
+pip install git+https://github.com/shadowsocks/shadowsocks.git@master
+For CentOS 7, if you need AEAD ciphers, you need install libsodium
+
+dnf install libsodium python34-pip
+pip3 install  git+https://github.com/shadowsocks/shadowsocks.git@master
+Linux distributions with snap:
+
+snap install shadowsocks
+这就装上了，然后还得配置一个json文件（在运行的时候要用 
+格式如下：
+
+{
+    "server":"my_server_ip",
+    "server_port":8388,
+    "local_address": "127.0.0.1",
+    "local_port":1080,
+    "password":"mypassword",
+    "timeout":300,
+    "method":"aes-256-cfb",
+    "fast_open": false
+}
+my_server_ip改成vps外网ip，密码改一下就能用了。
+
+To start:
+
+ssserver -c /etc/shadowsocks.json
+-c后的路径改成你编辑的json的路径
+
+这个是前台执行，想要后台运行的话在命令后面append一个-d start
+
+要想关闭就输入
+
+ssserver -d stop
+这下ss理论上就搭好了
+
+然后再下载ss的windows客户端（linux用户就不用介绍了，自己找一下 
+https://github.com/shadowsocks/shadowsocks-windows/releases/download/4.0.10/Shadowsocks-4.0.10.zip
+
+然后再下载openvpn的windows客户端 
+https://swupdate.openvpn.org/community/releases/openvpn-install-2.4.6-I602.exe
+
+理论上这个是下不下来的（被墙，然而博主贴心（误）的下载了并放到了百度云： 
+链接：https://pan.baidu.com/s/1w4RrYVOZ9T23uthPNM3l1Q 密码：sa1o
+
+然后运行ss客户端，配置好后右键托盘小飞机，选择启用系统代理，并且模式选择全局代理模式，这时候在浏览器里打开http://whoer.net，ip就应该是服务器IP了，
+
+然而这还没完，之前存了的那个*.ovpn 要在后面添加一段东西：
+
+socks-proxy 127.0.0.1 1080
+route SHADOWSOCKS_SERVER_IP 255.255.255.255 net_gateway 
+//SHADOWSOCKS_SERVER_IP改成你的server ip
